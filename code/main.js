@@ -1,9 +1,12 @@
-import kaboom from "kaboom";
+import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
 
-// initialize context
-kaboom({
-  scale: 1.3
+// Initialize kaboom context
+const k = kaboom({
+  scale: 1.3,
+  background: [0, 0, 0],
+  global: true // This makes all kaboom functions globally available
 });
+
 
 // load assets
 loadSprite("birdy", "sprites/birdy.png");
