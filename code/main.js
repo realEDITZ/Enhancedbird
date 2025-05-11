@@ -7,7 +7,6 @@ const k = kaboom({
   global: true // This makes all kaboom functions globally available
 });
 
-
 // load assets
 loadSprite("birdy", "sprites/birdy.png");
 loadSprite("burdy", "sprites/bean.png");
@@ -32,33 +31,36 @@ scene("menu", () => {
   add([
     text("ENHANCED Flappy Bird", { size: 45 }),
     pos(width() / 2, height() / 4),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 0),
   ]);
 
-  // Add animated bird for decoration
+  // Add animated bird for decoration - FIXED VERSION
   const menuBird = add([
     sprite("birdy"),
     scale(2),
     pos(width() / 2, height() / 2 - 20),
-    origin("center"),
+    anchor("center"),
+    {
+      // Add floating direction to the object itself
+      floatDir: 1
+    }
   ]);
 
-  // Make bird float up and down
-  let floatDir = 1;
-  menuBird.action(() => {
-    menuBird.pos.y += floatDir * 0.7;
+  // Add the action as a separate function call - FIXED
+  onUpdate(() => {
+    menuBird.pos.y += menuBird.floatDir * 0.7;
     if (menuBird.pos.y > height() / 2 + 10 || menuBird.pos.y < height() / 2 - 30) {
-      floatDir *= -1;
+      menuBird.floatDir *= -1;
     }
   });
-
+  
   // Add Play Button
   const playBtn = add([
     text("PLAY", { size: 32 }),
     pos(width() / 2, height() / 2 + 80),
     area(),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 0),
     "playButton"
   ]);
@@ -68,13 +70,13 @@ scene("menu", () => {
     text("HOW TO PLAY", { size: 32 }),
     pos(width() / 2, height() / 2 + 140),
     area(),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 255),
     "howToPlayButton"
   ]);
 
   // Track mouse clicks
-  mouseClick(() => {
+  onClick(() => {
     // Check if clicking on play button
     if (mousePos().x > playBtn.pos.x - 50 && 
         mousePos().x < playBtn.pos.x + 50 &&
@@ -93,7 +95,7 @@ scene("menu", () => {
   });
 
   // Button hover effect
-  action("playButton", (btn) => {
+  onUpdate("playButton", (btn) => {
     if (mousePos().x > btn.pos.x - 50 && 
         mousePos().x < btn.pos.x + 50 &&
         mousePos().y > btn.pos.y - 20 && 
@@ -104,7 +106,7 @@ scene("menu", () => {
     }
   });
 
-  action("howToPlayButton", (btn) => {
+  onUpdate("howToPlayButton", (btn) => {
     if (mousePos().x > btn.pos.x - 100 && 
         mousePos().x < btn.pos.x + 100 &&
         mousePos().y > btn.pos.y - 20 && 
@@ -116,7 +118,7 @@ scene("menu", () => {
   });
 
   // Keyboard controls for accessibility
-  keyPress("space", () => {
+  onKeyPress("space", () => {
     go("game");
   });
 });
@@ -132,7 +134,7 @@ scene("howToPlay", () => {
   add([
     text("HOW TO PLAY", { size: 40 }),
     pos(width() / 2, 60),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 0),
   ]);
 
@@ -158,7 +160,7 @@ scene("howToPlay", () => {
       width: width() - 100
     }),
     pos(width() / 2, 180),
-    origin("top"),
+    anchor("top"),
     color(255, 255, 255),
   ]);
 
@@ -167,7 +169,7 @@ scene("howToPlay", () => {
     text("BACK", { size: 32 }),
     pos(width() / 4, height() - 80),
     area(),
-    origin("center"),
+    anchor("center"),
     color(255, 100, 100),
   ]);
 
@@ -176,12 +178,12 @@ scene("howToPlay", () => {
     text("PLAY", { size: 32 }),
     pos(width() * 3/4, height() - 80),
     area(),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 0),
   ]);
 
   // Handle mouse clicks
-  mouseClick(() => {
+  onClick(() => {
     // Check if clicking on back button
     if (mousePos().x > backBtn.pos.x - 50 && 
         mousePos().x < backBtn.pos.x + 50 &&
@@ -200,7 +202,7 @@ scene("howToPlay", () => {
   });
 
   // Button hover effects
-  action(() => {
+  onUpdate(() => {
     // Back button hover effect
     if (mousePos().x > backBtn.pos.x - 50 && 
         mousePos().x < backBtn.pos.x + 50 &&
@@ -223,11 +225,11 @@ scene("howToPlay", () => {
   });
 
   // Keyboard controls
-  keyPress("escape", () => {
+  onKeyPress("escape", () => {
     go("menu");
   });
 
-  keyPress("space", () => {
+  onKeyPress("space", () => {
     go("game");
   });
 });
@@ -237,11 +239,11 @@ scene("game", () => {
   let score = 0;
   let gameSpeed = 160; // Initial speed
   let baseSpeed = 160; // Store base speed for power-ups
-  let laserThreshold = rand(20, 35);
+  let laserThreshold = randi(20, 35);
   let lasersActive = false;
   let laserDuration = 25; // Initial duration in seconds
   let breakDuration = 20; // Break duration in seconds
-  let bulletThreshold = rand(35, 55);
+  let bulletThreshold = randi(35, 55);
   let bulletsActive = false;
   let immunityHits = 0;
   let activeEffects = {}; // Track active power-ups
@@ -251,7 +253,7 @@ scene("game", () => {
   let powerUpMessage = add([
     text("", { size: 36 }),
     pos(width() / 2, 80),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 0), // Yellow color for visibility
     z(100) // Ensure it's on top of other elements
   ]);
@@ -301,6 +303,65 @@ scene("game", () => {
     }
   }
 
+  // Add background
+  add([
+    sprite("bg", {width: width(), height: height()})
+  ]);
+
+  // Add score display
+  const scoreText = add([
+    text(score.toString(), {size: 50}),
+    pos(10, 10)
+  ]);
+
+  // Add the player
+  const player = add([
+    sprite("birdy"),
+    scale(2),
+    pos(80, 40),
+    area(),
+    body(),
+  ]);
+
+  // Function to produce pipes
+  function producePipes() {
+    // Calculate pipe gap based on score
+    const getPipeGap = () => {
+      const baseGap = 245; // Start with a wider gap
+      const minGap = 132; // Don't let it get too narrow
+      const reductionRate = 5; // How much to reduce per point
+      const currentGap = Math.max(baseGap - (score * reductionRate), minGap);
+      const variance = 33; // Small variance for randomness
+      return currentGap + rand(-variance, variance);
+    };
+
+    const offset = rand(-50, 50);
+    const currentGap = getPipeGap();
+
+    // Bottom pipe
+    add([
+      sprite("pipe"),
+      pos(width(), height()/2 + offset + currentGap/2),
+      area(),
+      "pipe",
+      { passed: false },
+      { speed: gameSpeed },
+    ]);
+
+    // Top pipe (flipped)
+    add([
+      sprite("pipe", {flipY: true}),
+      pos(width(), height()/2 + offset - currentGap/2),
+      anchor("botleft"),
+      area(),
+      "pipe",
+      { speed: gameSpeed },
+    ]);
+  }
+
+  // Set up pipe generation
+  loop(1.5, producePipes);
+
   // Power-up system
   function spawnPowerUp() {
     if (!player.exists()) return;
@@ -316,256 +377,214 @@ scene("game", () => {
       { name: "tripleScore", chance: 0.05, duration: 10 },
     ];
 
+    // Create a weighted choice
+    const weightedPowerUps = [];
+    powerUps.forEach(pu => {
+      for (let i = 0; i < pu.chance * 100; i++) {
+        weightedPowerUps.push(pu);
+      }
+    });
+
+    // Pick a random power-up from the weighted list
+    const selectedPowerUp = weightedPowerUps[Math.floor(Math.random() * weightedPowerUps.length)];
+
+    // Create the power-up box
     const powerUpBox = add([
-        sprite("box"),
-        pos(width(), rand(50, height() - 100)),
-        area(),
-        "powerup",
-        { type: choose(powerUps) },
-        move(LEFT, gameSpeed * 2.2),
-        { moveDir: rand(-1, 1) },
-        {
-          update() {
-        powerUpBox.move(0, powerUpBox.moveDir * 2);
-        if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
-          powerUpBox.moveDir *= -1;
-        }
-      }
-      }]);
-
-
-    wait(rand(40, 65), spawnPowerUp);
-  }
-
-  function activatePowerUp(type) {
-      let message = "";
-
-      // Debug log to confirm activation
-      console.log("Activating power-up: " + type.name);
-
-      switch(type.name) {
-        case "quarterSpeed":
-          message = "QUARTER SPEED!";
-          const quarterSpeed = gameSpeed * 0.25;
-          gameSpeed = quarterSpeed;
-          activeEffects["quarterSpeed"] = true;
-          showPowerUpMessage(message);
-
-          wait(type.duration, () => {
-            gameSpeed = gameSpeed / 0.25;
-            delete activeEffects["quarterSpeed"];
-
-            // Only hide message if no other effects are active
-            if (Object.keys(activeEffects).length === 0) {
-              hidePowerUpMessage();
-            } else if (immunityHits > 0) {
-              updateImmunityMessage(); // Switch back to showing immunity
-            }
-          });
-          break;
-
-        case "halfSpeed":
-          message = "HALF SPEED!";
-          const halfSpeed = gameSpeed * 0.5;
-          gameSpeed = halfSpeed;
-          activeEffects["halfSpeed"] = true;
-          showPowerUpMessage(message);
-
-          wait(type.duration, () => {
-            gameSpeed = gameSpeed / 0.5;
-            delete activeEffects["halfSpeed"];
-
-            // Only hide message if no other effects are active
-            if (Object.keys(activeEffects).length === 0) {
-              hidePowerUpMessage();
-            } else if (immunityHits > 0) {
-              updateImmunityMessage(); // Switch back to showing immunity
-            }
-          });
-          break;
-
-        case "immunity":
-          immunityHits = 2;
-          activeEffects["immunity"] = true;
-          updateImmunityMessage();
-          break;
-
-        case "doubleSpeed":
-          message = "DOUBLE SPEED!";
-          const doubleSpeed = gameSpeed * 2;
-          gameSpeed = doubleSpeed;
-          activeEffects["doubleSpeed"] = true;
-          showPowerUpMessage(message);
-
-          wait(type.duration, () => {
-            gameSpeed = gameSpeed / 2;
-            delete activeEffects["doubleSpeed"];
-
-            // Only hide message if no other effects are active
-            if (Object.keys(activeEffects).length === 0) {
-              hidePowerUpMessage();
-            } else if (immunityHits > 0) {
-              updateImmunityMessage(); // Switch back to showing immunity
-            }
-          });
-          break;
-
-        case "spawnLasers":
-          message = "LASERS ACTIVE!";
-          lasersActive = true;
-          activeEffects["lasers"] = true;
-          showPowerUpMessage(message);
-          // Immediately start spawning lasers
-          spawnLaser();
-
-          wait(type.duration, () => {
-            lasersActive = false;
-            delete activeEffects["lasers"];
-
-            // Only hide message if no other effects are active
-            if (Object.keys(activeEffects).length === 0) {
-              hidePowerUpMessage();
-            } else if (immunityHits > 0) {
-              updateImmunityMessage(); // Switch back to showing immunity
-            }
-          });
-          break;
-
-        case "spawnBullets":
-          message = "BULLETS ACTIVE!";
-          bulletsActive = true;
-          activeEffects["bullets"] = true;
-          showPowerUpMessage(message);
-          // Immediately start spawning bullets
-          spawnBullet();
-
-          wait(type.duration, () => {
-            bulletsActive = false;
-            delete activeEffects["bullets"];
-
-            // Only hide message if no other effects are active
-            if (Object.keys(activeEffects).length === 0) {
-              hidePowerUpMessage();
-            } else if (immunityHits > 0) {
-              updateImmunityMessage(); // Switch back to showing immunity
-            }
-          });
-          break;
-
-        case "doubleScore":
-          message = "DOUBLE SCORE!";
-          scoreMultiplier = 2;
-          activeEffects["doubleScore"] = true;
-          showPowerUpMessage(message);
-
-          wait(type.duration, () => {
-            scoreMultiplier = 1;
-            delete activeEffects["doubleScore"];
-
-            // Only hide message if no other effects are active
-            if (Object.keys(activeEffects).length === 0) {
-              hidePowerUpMessage();
-            } else if (immunityHits > 0) {
-              updateImmunityMessage(); // Switch back to showing immunity
-            }
-          });
-          break;
-
-        case "tripleScore":
-          message = "TRIPLE SCORE!";
-          scoreMultiplier = 3;
-          activeEffects["tripleScore"] = true;
-          showPowerUpMessage(message);
-
-          wait(type.duration, () => {
-            scoreMultiplier = 1;
-            delete activeEffects["tripleScore"];
-
-            // Only hide message if no other effects are active
-            if (Object.keys(activeEffects).length === 0) {
-              hidePowerUpMessage();
-            } else if (immunityHits > 0) {
-              updateImmunityMessage(); // Switch back to showing immunity
-            }
-          });
-          break;
-      }
-    }
-
-  // Function to calculate pipe gap based on score
-  function getPipeGap() {
-    const baseGap = 245; // Start with a wider gap
-    const minGap = 132; // Don't let it get too narrow
-    const reductionRate = 5; // How much to reduce per point
-    const currentGap = Math.max(baseGap - (score * reductionRate), minGap);
-    const variance = 33; // Small variance for randomness
-    return currentGap + rand(-variance, variance);
-  }
-
-  add([
-    sprite("bg", {width: width(), height: height()})
-  ]);
-
-  const scoreText = add([
-    text(score, {size: 50})
-  ]);
-
-  // add a game object to screen
-  const player = add([
-    // list of components
-    sprite("birdy"),
-    scale(2),
-    pos(80, 40),
-    area(),
-    body(),
-  ]);
-
-  function producePipes(){
-    const offset = rand(-50, 50);
-    const currentGap = getPipeGap();
-
-    add([
-      sprite("pipe"),
-      pos(width(), height()/2 + offset + currentGap/2),
-      "pipe",
+      sprite("box"),
+      pos(width(), randi(50, height() - 100)),
       area(),
-      {passed: false}
+      "powerup",
+      { 
+        type: selectedPowerUp,
+        moveDir: rand(-1, 1) 
+      },
     ]);
 
-    add([
-      sprite("pipe", {flipY: true}),
-      pos(width(), height()/2 + offset - currentGap/2),
-      origin("botleft"),
-      "pipe",
-      area()
-    ]);
+    // Add movement directly to the power-up
+    powerUpBox.onUpdate(() => {
+      powerUpBox.move(-gameSpeed * 2.2, powerUpBox.moveDir * 2);
+      if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
+        powerUpBox.moveDir *= -1;
+      }
+    });
+
+    // Schedule next power-up
+    wait(randi(40, 65), spawnPowerUp);
   }
 
-  loop(1.5, () => {
-    producePipes();
-  });
+  // Function to handle power-up activation
+  function activatePowerUp(type) {
+    let message = "";
+    
+    // Debug log to confirm activation
+    console.log("Activating power-up: " + type.name);
 
-  // Start spawning power-ups
-  wait(5, spawnPowerUp);
+    switch(type.name) {
+      case "quarterSpeed":
+        message = "QUARTER SPEED!";
+        gameSpeed = gameSpeed * 0.25;
+        activeEffects["quarterSpeed"] = true;
+        showPowerUpMessage(message);
 
-  action("pipe", (pipe) => {
+        wait(type.duration, () => {
+          gameSpeed = gameSpeed / 0.25;
+          delete activeEffects["quarterSpeed"];
+
+          // Only hide message if no other effects are active
+          if (Object.keys(activeEffects).length === 0) {
+            hidePowerUpMessage();
+          } else if (immunityHits > 0) {
+            updateImmunityMessage(); // Switch back to showing immunity
+          }
+        });
+        break;
+
+      case "halfSpeed":
+        message = "HALF SPEED!";
+        gameSpeed = gameSpeed * 0.5;
+        activeEffects["halfSpeed"] = true;
+        showPowerUpMessage(message);
+
+        wait(type.duration, () => {
+          gameSpeed = gameSpeed / 0.5;
+          delete activeEffects["halfSpeed"];
+
+          // Only hide message if no other effects are active
+          if (Object.keys(activeEffects).length === 0) {
+            hidePowerUpMessage();
+          } else if (immunityHits > 0) {
+            updateImmunityMessage(); // Switch back to showing immunity
+          }
+        });
+        break;
+
+      case "immunity":
+        immunityHits = 2;
+        activeEffects["immunity"] = true;
+        updateImmunityMessage();
+        break;
+
+      case "doubleSpeed":
+        message = "DOUBLE SPEED!";
+        gameSpeed = gameSpeed * 2;
+        activeEffects["doubleSpeed"] = true;
+        showPowerUpMessage(message);
+
+        wait(type.duration, () => {
+          gameSpeed = gameSpeed / 2;
+          delete activeEffects["doubleSpeed"];
+
+          // Only hide message if no other effects are active
+          if (Object.keys(activeEffects).length === 0) {
+            hidePowerUpMessage();
+          } else if (immunityHits > 0) {
+            updateImmunityMessage(); // Switch back to showing immunity
+          }
+        });
+        break;
+
+      case "spawnLasers":
+        message = "LASERS ACTIVE!";
+        lasersActive = true;
+        activeEffects["lasers"] = true;
+        showPowerUpMessage(message);
+        // Immediately start spawning lasers
+        spawnLaser();
+
+        wait(type.duration, () => {
+          lasersActive = false;
+          delete activeEffects["lasers"];
+
+          // Only hide message if no other effects are active
+          if (Object.keys(activeEffects).length === 0) {
+            hidePowerUpMessage();
+          } else if (immunityHits > 0) {
+            updateImmunityMessage(); // Switch back to showing immunity
+          }
+        });
+        break;
+
+      case "spawnBullets":
+        message = "BULLETS ACTIVE!";
+        bulletsActive = true;
+        activeEffects["bullets"] = true;
+        showPowerUpMessage(message);
+        // Immediately start spawning bullets
+        spawnBullet();
+
+        wait(type.duration, () => {
+          bulletsActive = false;
+          delete activeEffects["bullets"];
+
+          // Only hide message if no other effects are active
+          if (Object.keys(activeEffects).length === 0) {
+            hidePowerUpMessage();
+          } else if (immunityHits > 0) {
+            updateImmunityMessage(); // Switch back to showing immunity
+          }
+        });
+        break;
+
+      case "doubleScore":
+        message = "DOUBLE SCORE!";
+        scoreMultiplier = 2;
+        activeEffects["doubleScore"] = true;
+        showPowerUpMessage(message);
+
+        wait(type.duration, () => {
+          scoreMultiplier = 1;
+          delete activeEffects["doubleScore"];
+
+          // Only hide message if no other effects are active
+          if (Object.keys(activeEffects).length === 0) {
+            hidePowerUpMessage();
+          } else if (immunityHits > 0) {
+            updateImmunityMessage(); // Switch back to showing immunity
+          }
+        });
+        break;
+
+      case "tripleScore":
+        message = "TRIPLE SCORE!";
+        scoreMultiplier = 3;
+        activeEffects["tripleScore"] = true;
+        showPowerUpMessage(message);
+
+        wait(type.duration, () => {
+          scoreMultiplier = 1;
+          delete activeEffects["tripleScore"];
+
+          // Only hide message if no other effects are active
+          if (Object.keys(activeEffects).length === 0) {
+            hidePowerUpMessage();
+          } else if (immunityHits > 0) {
+            updateImmunityMessage(); // Switch back to showing immunity
+          }
+        });
+        break;
+    }
+  }
+
+  // Handle pipe movement and scoring
+  onUpdate("pipe", (pipe) => {
+    // Move the pipe according to current game speed
     pipe.move(-gameSpeed, 0);
 
+    // Check if pipe has passed the player
     if (pipe.passed === false && pipe.pos.x < player.pos.x) {
       pipe.passed = true;
       // Apply score multiplier when increasing score
       score += 1 * scoreMultiplier;
-      scoreText.text = score;
+      scoreText.text = score.toString();
       gameSpeed += 9; // Increase speed with each point
       play("point");
 
-      // Only trigger based on score if not already active via power-up
+      // Check for reaching thresholds
       if (score >= bulletThreshold && !bulletsActive) {
         bulletsActive = true;
         spawnBullet();
       }
 
-      // Only trigger based on score if not already active via power-up
       if (score >= laserThreshold && !lasersActive) {
         lasersActive = true;
         spawnLaser();
@@ -576,7 +595,7 @@ scene("game", () => {
 
           // Wait break duration then restart with increased duration
           wait(breakDuration, () => {
-            laserDuration += rand(10, 30); // Increase duration
+            laserDuration += randi(10, 30); // Increase duration
             lasersActive = true;
             spawnLaser();
           });
@@ -585,35 +604,46 @@ scene("game", () => {
     }
   });
 
+  // Function to spawn lasers
   function spawnLaser() {
-    if (!lasersActive) return;
+    if (!lasersActive || !player.exists()) return;
 
     add([
       sprite("LAZAR"),
       pos(rand(0, width()), 0),
       area(),
       "laser",
-      move(DOWN, 400),
-    ]);
+      { 
+        speed: 400 // Fixed speed value
+      }
+    ]).onUpdate(function() {
+      this.move(0, this.speed);
+    });
 
     wait(rand(1, 3), spawnLaser);
   }
 
+  // Function to spawn bullets
   function spawnBullet() {
-    if (!bulletsActive) return;
+    if (!bulletsActive || !player.exists()) return;
 
     add([
       sprite("burdy"),
       pos(width(), rand(50, height() - 50)),
       area(),
       "bullet",
-      move(LEFT, 3000),
-    ]);
+      {
+        speed: 300 // Fixed speed value
+      }
+    ]).onUpdate(function() {
+      this.move(-this.speed, 0);
+    });
 
     wait(rand(1.5, 4), spawnBullet);
   }
 
-  player.collides("bullet", () => {
+  // Collision handlers
+  player.onCollide("bullet", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -623,7 +653,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.collides("laser", () => {
+  player.onCollide("laser", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -633,7 +663,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.collides("pipe", () => {
+  player.onCollide("pipe", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -643,7 +673,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.collides("powerup", (p) => {
+  player.onCollide("powerup", (p) => {
     // First destroy the power-up to prevent multiple collisions
     const powerupType = p.type;
     destroy(p);
@@ -656,16 +686,21 @@ scene("game", () => {
     console.log("Collected power-up!");
   });
 
-  player.action(() => {
+  // Check if player goes out of bounds
+  player.onUpdate(() => {
     if (player.pos.y > height() + 30 || player.pos.y < -30) {
       go("gameover", score);
     }
   });
 
-  keyPress("space", () => {
+  // Controls
+  onKeyPress("space", () => {
     play("wooosh");
     player.jump(310);
   });
+
+  // Start spawning power-ups after a delay
+  wait(5, spawnPowerUp);
 });
 
 scene("gameover", (score) => {
@@ -691,7 +726,7 @@ scene("gameover", (score) => {
       }
     ),
     pos(width()/2, height()/2),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 255)
   ]);
 
@@ -699,7 +734,7 @@ scene("gameover", (score) => {
   const menuBtn = add([
     text("MENU", { size: 28 }),
     pos(width() / 4, height() - 80),
-    origin("center"),
+    anchor("center"),
     color(255, 100, 100),
   ]);
 
@@ -707,12 +742,12 @@ scene("gameover", (score) => {
   const retryBtn = add([
     text("TRY AGAIN", { size: 28 }),
     pos(width() * 3/4, height() - 80),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 0),
   ]);
 
   // Handle mouse clicks
-  mouseClick(() => {
+  onClick(() => {
     // Check if clicking on menu button
     if (mousePos().x > menuBtn.pos.x - 50 && 
         mousePos().x < menuBtn.pos.x + 50 &&
@@ -731,7 +766,7 @@ scene("gameover", (score) => {
   });
 
   // Button hover effects
-  action(() => {
+  onUpdate(() => {
     // Menu button hover effect
     if (mousePos().x > menuBtn.pos.x - 50 && 
         mousePos().x < menuBtn.pos.x + 50 &&
@@ -753,14 +788,14 @@ scene("gameover", (score) => {
     }
   });
 
-  keyPress("space", () => {
+  onKeyPress("space", () => {
     go("game");
   });
 
-  keyPress("escape", () => {
+  onKeyPress("escape", () => {
     go("menu");
   });
 });
 
-// Start with the menu scene instead of going directly to game
+// Start with the menu scene
 go("menu");
