@@ -1,37 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ENHANCED Flappy Bird!</title>
-    <style>
-      /* Remove default margin and prevent scrollbars */
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
-      /* Ensure the game canvas fills the screen */
-      canvas {
-        display: block;
-        width: 100vw;
-        height: 100vh;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Load Kaboom.js -->
-    <script src="https://kaboomjs.com/lib/0.5.0/kaboom.js"></script>
-    <!-- Initialize Kaboom before running your game code -->
-    <script>
-      // Initialize kaboom context
-      kaboom({
-        global: true,
-        fullscreen: true,
-        clearColor: [0, 0, 0, 1],
-      });
-    </script>
-    <!-- Your game logic in main.js -->
-    <script defer src="main.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Bird</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: black;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+  <!-- Include the Kaboom.js library first -->
+  <script src="https://unpkg.com/kaboom@3000.0.1/dist/kaboom.js"></script>
+  <!-- Then include your main.js from the code folder -->
+  <script defer src="code/main.js"></script>
+</head>
+<body>
+  <!-- Kaboom will create the canvas automatically -->
+</body>
 </html>
-
