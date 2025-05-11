@@ -1,4 +1,4 @@
-// initialize context
+import kaboom from "kaboom";
 kaboom({
   scale: 1.3
 });
