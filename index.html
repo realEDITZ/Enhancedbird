@@ -1,20 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>ENHANCED Flappy Bird!</title>
+<html>
+<head>
+    <title>Enhanced Flappy Bird</title>
     <style>
-      /* just to get rid of the white border and scrolling */
-      body {
-        margin: 0;
-        overflow: hidden;
-        background-color: black;
-      }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+        }
     </style>
-  </head>
-  <body>
-    <!-- Using a newer version of Kaboom.js -->
-    <script src="https://unpkg.com/kaboom@3000.0.1/dist/kaboom.js"></script>
-    <script src="code/main.js"></script>
-  </body>
+</head>
+<body>
+    <!-- The game canvas will be injected here by Kaboom.js -->
+    <script type="module" src="code/main.js"></script>
+</body>
 </html>
