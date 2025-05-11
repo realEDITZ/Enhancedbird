@@ -1,5 +1,4 @@
-import kaboom from "kaboom";
-
+// Using global kaboom instead of import
 // initialize context
 kaboom({
   scale: 1.3
