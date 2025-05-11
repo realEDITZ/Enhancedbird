@@ -1,36 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Enhanced Flappy Bird</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #000;
+            background-color: black;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             height: 100vh;
-            touch-action: none; /* Prevents default touch actions */
-        }
-        canvas {
-            display: block;
-            margin: 0 auto;
-            touch-action: none; /* Ensures touch events work properly */
-        }
-        /* Disables double-tap to zoom on mobile */
-        * { 
-            touch-action: manipulation;
+            width: 100vw;
         }
     </style>
 </head>
 <body>
-    <!-- Canvas will be injected by Kaboom.js -->
-    
-    <!-- Use script type="module" for GitHub Pages compatibility -->
-    <script type="module" src="main.js"></script>
+    <!-- The game canvas will be injected here by Kaboom.js -->
+    <script type="module" src="code/main.js"></script>
 </body>
 </html>
