@@ -1,6 +1,10 @@
-import kaboom from "kaboom";
-kaboom({
-  scale: 1.3
+import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
+
+// Initialize kaboom context
+const k = kaboom({
+  scale: 1.3,
+  background: [0, 0, 0],
+  global: true // This makes all kaboom functions globally available
 });
 
 // load assets
