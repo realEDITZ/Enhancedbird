@@ -1,14 +1,11 @@
-console.log("🔥 main.js loaded");
-
-// Remove the import statement since we'll use the global kaboom function
-// import kaboom from "kaboom";
+import kaboom from "kaboom";
 
 // initialize context
 kaboom({
   scale: 1.3
 });
 
-// load assets - adjust the paths to be relative to the root
+// load assets
 loadSprite("birdy", "../sprites/birdy.png");
 loadSprite("burdy", "../sprites/bean.png");
 loadSprite("LAZAR", "../sprites/LAZAR.png");
@@ -32,7 +29,7 @@ scene("menu", () => {
   add([
     text("ENHANCED Flappy Bird", { size: 45 }),
     pos(width() / 2, height() / 4),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 0),
   ]);
 
@@ -41,7 +38,7 @@ scene("menu", () => {
     sprite("birdy"),
     scale(2),
     pos(width() / 2, height() / 2 - 20),
-    origin("center"),
+    anchor("center"),
   ]);
 
   // Make bird float up and down
@@ -58,7 +55,7 @@ scene("menu", () => {
     text("PLAY", { size: 32 }),
     pos(width() / 2, height() / 2 + 80),
     area(),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 0),
     "playButton"
   ]);
@@ -68,7 +65,7 @@ scene("menu", () => {
     text("HOW TO PLAY", { size: 32 }),
     pos(width() / 2, height() / 2 + 140),
     area(),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 255),
     "howToPlayButton"
   ]);
@@ -132,7 +129,7 @@ scene("howToPlay", () => {
   add([
     text("HOW TO PLAY", { size: 40 }),
     pos(width() / 2, 60),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 0),
   ]);
 
@@ -158,7 +155,7 @@ scene("howToPlay", () => {
       width: width() - 100
     }),
     pos(width() / 2, 180),
-    origin("top"),
+    anchor("top"),
     color(255, 255, 255),
   ]);
 
@@ -167,7 +164,7 @@ scene("howToPlay", () => {
     text("BACK", { size: 32 }),
     pos(width() / 4, height() - 80),
     area(),
-    origin("center"),
+    anchor("center"),
     color(255, 100, 100),
   ]);
 
@@ -176,7 +173,7 @@ scene("howToPlay", () => {
     text("PLAY", { size: 32 }),
     pos(width() * 3/4, height() - 80),
     area(),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 0),
   ]);
 
@@ -251,7 +248,7 @@ scene("game", () => {
   let powerUpMessage = add([
     text("", { size: 36 }),
     pos(width() / 2, 80),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 0), // Yellow color for visibility
     z(100) // Ensure it's on top of other elements
   ]);
@@ -535,7 +532,7 @@ scene("game", () => {
     add([
       sprite("pipe", {flipY: true}),
       pos(width(), height()/2 + offset - currentGap/2),
-      origin("botleft"),
+      anchor("botleft"),
       "pipe",
       area()
     ]);
@@ -691,7 +688,7 @@ scene("gameover", (score) => {
       }
     ),
     pos(width()/2, height()/2),
-    origin("center"),
+    anchor("center"),
     color(255, 255, 255)
   ]);
 
@@ -699,7 +696,7 @@ scene("gameover", (score) => {
   const menuBtn = add([
     text("MENU", { size: 28 }),
     pos(width() / 4, height() - 80),
-    origin("center"),
+    anchor("center"),
     color(255, 100, 100),
   ]);
 
@@ -707,7 +704,7 @@ scene("gameover", (score) => {
   const retryBtn = add([
     text("TRY AGAIN", { size: 28 }),
     pos(width() * 3/4, height() - 80),
-    origin("center"),
+    anchor("center"),
     color(0, 255, 0),
   ]);
 
