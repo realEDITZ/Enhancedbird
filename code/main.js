@@ -1,20 +1,23 @@
-import kaboom from "kaboom";
+console.log("🔥 main.js loaded");
+
+// Remove the import statement since we'll use the global kaboom function
+// import kaboom from "kaboom";
 
 // initialize context
 kaboom({
   scale: 1.3
 });
 
-// load assets
-loadSprite("birdy", "sprites/birdy.png");
-loadSprite("burdy", "sprites/bean.png");
-loadSprite("LAZAR", "sprites/LAZAR.png");
-loadSprite("bg", "sprites/bg.png");
-loadSprite("pipe", "sprites/pipe.png");
-loadSprite("box", "sprites/box.png");
-loadSound("wooosh", "sounds/wooosh.mp3");
-loadSound("point", "sounds/point.mp3");
-loadSound("hit", "sounds/hit.wav");
+// load assets - adjust the paths to be relative to the root
+loadSprite("birdy", "../sprites/birdy.png");
+loadSprite("burdy", "../sprites/bean.png");
+loadSprite("LAZAR", "../sprites/LAZAR.png");
+loadSprite("bg", "../sprites/bg.png");
+loadSprite("pipe", "../sprites/pipe.png");
+loadSprite("box", "../sprites/box.png");
+loadSound("wooosh", "../sounds/wooosh.mp3");
+loadSound("point", "../sounds/point.mp3");
+loadSound("hit", "../sounds/hit.wav");
 
 let highScore = 0;
 
