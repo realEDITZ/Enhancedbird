@@ -1,4 +1,3 @@
-// Using global kaboom instead of import
 // initialize context
 kaboom({
   scale: 1.3
@@ -70,7 +69,7 @@ scene("menu", () => {
   ]);
 
   // Track mouse clicks
-  mouseClick(() => {
+  onClick(() => {
     // Check if clicking on play button
     if (mousePos().x > playBtn.pos.x - 50 && 
         mousePos().x < playBtn.pos.x + 50 &&
@@ -89,7 +88,7 @@ scene("menu", () => {
   });
 
   // Button hover effect
-  action("playButton", (btn) => {
+  onUpdate("playButton", (btn) => {
     if (mousePos().x > btn.pos.x - 50 && 
         mousePos().x < btn.pos.x + 50 &&
         mousePos().y > btn.pos.y - 20 && 
@@ -100,7 +99,7 @@ scene("menu", () => {
     }
   });
 
-  action("howToPlayButton", (btn) => {
+  onUpdate("howToPlayButton", (btn) => {
     if (mousePos().x > btn.pos.x - 100 && 
         mousePos().x < btn.pos.x + 100 &&
         mousePos().y > btn.pos.y - 20 && 
@@ -112,7 +111,7 @@ scene("menu", () => {
   });
 
   // Keyboard controls for accessibility
-  keyPress("space", () => {
+  onKeyPress("space", () => {
     go("game");
   });
 });
@@ -177,7 +176,7 @@ scene("howToPlay", () => {
   ]);
 
   // Handle mouse clicks
-  mouseClick(() => {
+  onClick(() => {
     // Check if clicking on back button
     if (mousePos().x > backBtn.pos.x - 50 && 
         mousePos().x < backBtn.pos.x + 50 &&
@@ -196,7 +195,7 @@ scene("howToPlay", () => {
   });
 
   // Button hover effects
-  action(() => {
+  onUpdate(() => {
     // Back button hover effect
     if (mousePos().x > backBtn.pos.x - 50 && 
         mousePos().x < backBtn.pos.x + 50 &&
@@ -219,11 +218,11 @@ scene("howToPlay", () => {
   });
 
   // Keyboard controls
-  keyPress("escape", () => {
+  onKeyPress("escape", () => {
     go("menu");
   });
 
-  keyPress("space", () => {
+  onKeyPress("space", () => {
     go("game");
   });
 });
@@ -233,11 +232,11 @@ scene("game", () => {
   let score = 0;
   let gameSpeed = 160; // Initial speed
   let baseSpeed = 160; // Store base speed for power-ups
-  let laserThreshold = rand(20, 35);
+  let laserThreshold = randi(20, 35);
   let lasersActive = false;
   let laserDuration = 25; // Initial duration in seconds
   let breakDuration = 20; // Break duration in seconds
-  let bulletThreshold = rand(35, 55);
+  let bulletThreshold = randi(35, 55);
   let bulletsActive = false;
   let immunityHits = 0;
   let activeEffects = {}; // Track active power-ups
@@ -314,7 +313,7 @@ scene("game", () => {
 
     const powerUpBox = add([
         sprite("box"),
-        pos(width(), rand(50, height() - 100)),
+        pos(width(), randi(50, height() - 100)),
         area(),
         "powerup",
         { type: choose(powerUps) },
@@ -330,7 +329,7 @@ scene("game", () => {
       }]);
 
 
-    wait(rand(40, 65), spawnPowerUp);
+    wait(randi(40, 65), spawnPowerUp);
   }
 
   function activatePowerUp(type) {
@@ -544,7 +543,7 @@ scene("game", () => {
   // Start spawning power-ups
   wait(5, spawnPowerUp);
 
-  action("pipe", (pipe) => {
+  onUpdate("pipe", (pipe) => {
     pipe.move(-gameSpeed, 0);
 
     if (pipe.passed === false && pipe.pos.x < player.pos.x) {
@@ -572,7 +571,7 @@ scene("game", () => {
 
           // Wait break duration then restart with increased duration
           wait(breakDuration, () => {
-            laserDuration += rand(10, 30); // Increase duration
+            laserDuration += randi(10, 30); // Increase duration
             lasersActive = true;
             spawnLaser();
           });
@@ -609,7 +608,7 @@ scene("game", () => {
     wait(rand(1.5, 4), spawnBullet);
   }
 
-  player.collides("bullet", () => {
+  player.onCollide("bullet", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -619,7 +618,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.collides("laser", () => {
+  player.onCollide("laser", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -629,7 +628,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.collides("pipe", () => {
+  player.onCollide("pipe", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -639,7 +638,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.collides("powerup", (p) => {
+  player.onCollide("powerup", (p) => {
     // First destroy the power-up to prevent multiple collisions
     const powerupType = p.type;
     destroy(p);
@@ -652,13 +651,13 @@ scene("game", () => {
     console.log("Collected power-up!");
   });
 
-  player.action(() => {
+  onUpdate(() => {
     if (player.pos.y > height() + 30 || player.pos.y < -30) {
       go("gameover", score);
     }
   });
 
-  keyPress("space", () => {
+  onKeyPress("space", () => {
     play("wooosh");
     player.jump(310);
   });
@@ -708,7 +707,7 @@ scene("gameover", (score) => {
   ]);
 
   // Handle mouse clicks
-  mouseClick(() => {
+  onClick(() => {
     // Check if clicking on menu button
     if (mousePos().x > menuBtn.pos.x - 50 && 
         mousePos().x < menuBtn.pos.x + 50 &&
@@ -727,7 +726,7 @@ scene("gameover", (score) => {
   });
 
   // Button hover effects
-  action(() => {
+  onUpdate(() => {
     // Menu button hover effect
     if (mousePos().x > menuBtn.pos.x - 50 && 
         mousePos().x < menuBtn.pos.x + 50 &&
@@ -749,11 +748,11 @@ scene("gameover", (score) => {
     }
   });
 
-  keyPress("space", () => {
+  onKeyPress("space", () => {
     go("game");
   });
 
-  keyPress("escape", () => {
+  onKeyPress("escape", () => {
     go("menu");
   });
 });
