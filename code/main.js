@@ -1,14 +1,10 @@
 import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
 
-// Initialize kaboom context - MODIFIED FOR GITHUB PAGES
+// Initialize kaboom context
 const k = kaboom({
   scale: 1.3,
   background: [0, 0, 0],
-  global: true, // This makes all kaboom functions globally available
-  touchToMouse: true, // Better mobile support
-  crisp: true, // Crisp pixel rendering
-  // Using requestAnimationFrame instead of setTimeout for smoother updates
-  debug: false
+  global: true // This makes all kaboom functions globally available
 });
 
 // load assets
@@ -39,7 +35,7 @@ scene("menu", () => {
     color(255, 255, 0),
   ]);
 
-  // Add animated bird for decoration - IMPROVED VERSION
+  // Add animated bird for decoration - FIXED VERSION
   const menuBird = add([
     sprite("birdy"),
     scale(2),
@@ -47,16 +43,17 @@ scene("menu", () => {
     anchor("center"),
     {
       // Add floating direction to the object itself
-      floatDir: 1,
-      // Adding explicit update method
-      update() {
-        this.pos.y += this.floatDir * 0.7;
-        if (this.pos.y > height() / 2 + 10 || this.pos.y < height() / 2 - 30) {
-          this.floatDir *= -1;
-        }
-      }
+      floatDir: 1
     }
   ]);
+
+  // Add the action as a separate function call - FIXED
+  onUpdate(() => {
+    menuBird.pos.y += menuBird.floatDir * 0.7;
+    if (menuBird.pos.y > height() / 2 + 10 || menuBird.pos.y < height() / 2 - 30) {
+      menuBird.floatDir *= -1;
+    }
+  });
   
   // Add Play Button
   const playBtn = add([
@@ -78,7 +75,7 @@ scene("menu", () => {
     "howToPlayButton"
   ]);
 
-  // Track mouse clicks and touch
+  // Track mouse clicks
   onClick(() => {
     // Check if clicking on play button
     if (mousePos().x > playBtn.pos.x - 50 && 
@@ -143,9 +140,8 @@ scene("howToPlay", () => {
 
   // Instructions text
   const instructions = [
-    "To flap, press the SPACE BAR or CLICK/TAP the screen",
-    "and try to maneuver yourself through the pipes",
-    "and get a high score!",
+    "To flap, press the SPACE BAR and try to maneuver",
+    "yourself through the pipes and get a high score!",
     "",
     "There are powerups that you can encounter along the way",
     "that can do good (or bad)!",
@@ -252,7 +248,6 @@ scene("game", () => {
   let immunityHits = 0;
   let activeEffects = {}; // Track active power-ups
   let scoreMultiplier = 1; // Initialize score multiplier
-  let gameActive = true; // Track if game is active
 
   // Create power-up message display with initial empty text
   let powerUpMessage = add([
@@ -310,7 +305,7 @@ scene("game", () => {
 
   // Power-up system
   function spawnPowerUp() {
-    if (!player.exists() || !gameActive) return;
+    if (!player.exists()) return;
 
     const powerUps = [
       { name: "quarterSpeed", chance: 0.25, duration: 15 },
@@ -323,7 +318,7 @@ scene("game", () => {
       { name: "tripleScore", chance: 0.05, duration: 10 },
     ];
 
-    // Create powerUpBox
+    // FIXED: Create powerUpBox correctly
     const powerUpBox = add([
         sprite("box"),
         pos(width(), randi(50, height() - 100)),
@@ -337,10 +332,12 @@ scene("game", () => {
     ]);
 
     // Add movement update for the power-up box
-    powerUpBox.onUpdate(() => {
-      powerUpBox.move(0, powerUpBox.moveDir * 2);
-      if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
-        powerUpBox.moveDir *= -1;
+    onUpdate(() => {
+      if (powerUpBox.exists()) {
+        powerUpBox.move(0, powerUpBox.moveDir * 2);
+        if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
+          powerUpBox.moveDir *= -1;
+        }
       }
     });
 
@@ -349,6 +346,9 @@ scene("game", () => {
 
   function activatePowerUp(type) {
       let message = "";
+
+      // Debug log to confirm activation
+      console.log("Activating power-up: " + type.name);
 
       switch(type.name) {
         case "quarterSpeed":
@@ -359,7 +359,6 @@ scene("game", () => {
           showPowerUpMessage(message);
 
           wait(type.duration, () => {
-            if (!gameActive) return;
             gameSpeed = gameSpeed / 0.25;
             delete activeEffects["quarterSpeed"];
 
@@ -380,7 +379,6 @@ scene("game", () => {
           showPowerUpMessage(message);
 
           wait(type.duration, () => {
-            if (!gameActive) return;
             gameSpeed = gameSpeed / 0.5;
             delete activeEffects["halfSpeed"];
 
@@ -407,7 +405,6 @@ scene("game", () => {
           showPowerUpMessage(message);
 
           wait(type.duration, () => {
-            if (!gameActive) return;
             gameSpeed = gameSpeed / 2;
             delete activeEffects["doubleSpeed"];
 
@@ -429,7 +426,6 @@ scene("game", () => {
           spawnLaser();
 
           wait(type.duration, () => {
-            if (!gameActive) return;
             lasersActive = false;
             delete activeEffects["lasers"];
 
@@ -451,7 +447,6 @@ scene("game", () => {
           spawnBullet();
 
           wait(type.duration, () => {
-            if (!gameActive) return;
             bulletsActive = false;
             delete activeEffects["bullets"];
 
@@ -471,7 +466,6 @@ scene("game", () => {
           showPowerUpMessage(message);
 
           wait(type.duration, () => {
-            if (!gameActive) return;
             scoreMultiplier = 1;
             delete activeEffects["doubleScore"];
 
@@ -491,7 +485,6 @@ scene("game", () => {
           showPowerUpMessage(message);
 
           wait(type.duration, () => {
-            if (!gameActive) return;
             scoreMultiplier = 1;
             delete activeEffects["tripleScore"];
 
@@ -524,29 +517,17 @@ scene("game", () => {
     text(score, {size: 50})
   ]);
 
-  // add a game object to screen with proper physics
+  // add a game object to screen
   const player = add([
     // list of components
     sprite("birdy"),
     scale(2),
     pos(80, 40),
     area(),
-    body({
-      // Added gravity configuration for more consistent behavior
-      gravity: 980
-    }),
-    // Add explicit update method for player
-    {
-      update() {
-        // This ensures the player is always being updated
-        // on each frame, even if global updates are delayed
-      }
-    }
+    body(),
   ]);
 
   function producePipes(){
-    if (!gameActive) return;
-    
     const offset = rand(-50, 50);
     const currentGap = getPipeGap();
 
@@ -567,7 +548,7 @@ scene("game", () => {
     ]);
   }
 
-  const pipeInterval = loop(1.5, () => {
+  loop(1.5, () => {
     producePipes();
   });
 
@@ -598,12 +579,10 @@ scene("game", () => {
 
         // Set timer to deactivate lasers
         wait(laserDuration, () => {
-          if (!gameActive) return;
           lasersActive = false;
 
           // Wait break duration then restart with increased duration
           wait(breakDuration, () => {
-            if (!gameActive) return;
             laserDuration += randi(10, 30); // Increase duration
             lasersActive = true;
             spawnLaser();
@@ -614,7 +593,7 @@ scene("game", () => {
   });
 
   function spawnLaser() {
-    if (!lasersActive || !gameActive) return;
+    if (!lasersActive) return;
 
     add([
       sprite("LAZAR"),
@@ -628,7 +607,7 @@ scene("game", () => {
   }
 
   function spawnBullet() {
-    if (!bulletsActive || !gameActive) return;
+    if (!bulletsActive) return;
 
     add([
       sprite("burdy"),
@@ -647,7 +626,8 @@ scene("game", () => {
       updateImmunityMessage();
       return;
     }
-    endGame();
+    play("hit");
+    go("gameover", score);
   });
 
   player.onCollide("laser", () => {
@@ -656,7 +636,8 @@ scene("game", () => {
       updateImmunityMessage();
       return;
     }
-    endGame();
+    play("hit");
+    go("gameover", score);
   });
 
   player.onCollide("pipe", () => {
@@ -665,7 +646,8 @@ scene("game", () => {
       updateImmunityMessage();
       return;
     }
-    endGame();
+    play("hit");
+    go("gameover", score);
   });
 
   player.onCollide("powerup", (p) => {
@@ -676,39 +658,20 @@ scene("game", () => {
     // Then activate the power-up and play sound
     activatePowerUp(powerupType);
     play("point");
-  });
 
-  // Function to end the game properly
-  function endGame() {
-    if (!gameActive) return;
-    gameActive = false;
-    
-    play("hit");
-    go("gameover", score);
-  }
+    // Debug confirmation
+    console.log("Collected power-up!");
+  });
 
   onUpdate(() => {
-    if (!gameActive) return;
-    
     if (player.pos.y > height() + 30 || player.pos.y < -30) {
-      endGame();
+      go("gameover", score);
     }
   });
 
-  // Support both keyboard and touch/mouse controls
   onKeyPress("space", () => {
-    if (gameActive) {
-      play("wooosh");
-      player.jump(310);
-    }
-  });
-  
-  // Add mouse/touch control for mobile
-  onClick(() => {
-    if (gameActive) {
-      play("wooosh");
-      player.jump(310);
-    }
+    play("wooosh");
+    player.jump(310);
   });
 });
 
@@ -726,7 +689,7 @@ scene("gameover", (score) => {
       "GAME OVER!\n\n"
       + "SCORE: " + score + "\n"
       + "HIGH SCORE: " + highScore + "\n\n"
-      + "Press SPACE or CLICK to try again\n"
+      + "Press SPACE to try again\n"
       + "Press ESC for menu",
       {
         size: 35,
@@ -770,9 +733,6 @@ scene("gameover", (score) => {
         mousePos().x < retryBtn.pos.x + 75 &&
         mousePos().y > retryBtn.pos.y - 20 && 
         mousePos().y < retryBtn.pos.y + 20) {
-      go("game");
-    } else {
-      // Click anywhere else to retry
       go("game");
     }
   });
