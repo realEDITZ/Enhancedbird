@@ -34,29 +34,6 @@ scene("menu", () => {
     anchor("center"),
     color(255, 255, 0),
   ]);
-
-  // Add animated bird for decoration - WITH FIX
-  const menuBird = add([
-    sprite("birdy"),
-    scale(2),
-    pos(width() / 2, height() / 2 - 20),
-    anchor("center"),
-    {
-      // Add floating direction to the object itself
-      floatDir: 1
-    },
-    // Add the action component directly during object creation
-    action(() => {
-      menuBird.pos.y += menuBird.floatDir * 0.7;
-      if (menuBird.pos.y > height() / 2 + 10 || menuBird.pos.y < height() / 2 - 30) {
-        menuBird.floatDir *= -1;
-      }
-    })
-  ]);
-  
-  // No need for this separate action call - we included it above
-  // menuBird.action(() => { ... });
-
   // Add Play Button
   const playBtn = add([
     text("PLAY", { size: 32 }),
