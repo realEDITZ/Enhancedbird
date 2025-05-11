@@ -34,6 +34,27 @@ scene("menu", () => {
     anchor("center"),
     color(255, 255, 0),
   ]);
+
+  // Add animated bird for decoration - FIXED VERSION
+  const menuBird = add([
+    sprite("birdy"),
+    scale(2),
+    pos(width() / 2, height() / 2 - 20),
+    anchor("center"),
+    {
+      // Add floating direction to the object itself
+      floatDir: 1
+    }
+  ]);
+
+  // Add the action as a separate function call - FIXED
+  onUpdate(() => {
+    menuBird.pos.y += menuBird.floatDir * 0.7;
+    if (menuBird.pos.y > height() / 2 + 10 || menuBird.pos.y < height() / 2 - 30) {
+      menuBird.floatDir *= -1;
+    }
+  });
+  
   // Add Play Button
   const playBtn = add([
     text("PLAY", { size: 32 }),
@@ -297,23 +318,28 @@ scene("game", () => {
       { name: "tripleScore", chance: 0.05, duration: 10 },
     ];
 
-    // FIX: Modified the powerUpBox creation with action component
+    // FIXED: Create powerUpBox correctly
     const powerUpBox = add([
         sprite("box"),
         pos(width(), randi(50, height() - 100)),
         area(),
-        "powerup",
-        { type: choose(powerUps) },
         move(LEFT, gameSpeed * 2.2),
-        { moveDir: rand(-1, 1) },
-        // Add action component properly
-        action(() => {
-          powerUpBox.move(0, powerUpBox.moveDir * 2);
-          if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
-            powerUpBox.moveDir *= -1;
-          }
-        })
+        "powerup",
+        { 
+          type: choose(powerUps),
+          moveDir: rand(-1, 1) 
+        }
     ]);
+
+    // Add movement update for the power-up box
+    onUpdate(() => {
+      if (powerUpBox.exists()) {
+        powerUpBox.move(0, powerUpBox.moveDir * 2);
+        if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
+          powerUpBox.moveDir *= -1;
+        }
+      }
+    });
 
     wait(randi(40, 65), spawnPowerUp);
   }
