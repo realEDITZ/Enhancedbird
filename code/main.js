@@ -8,15 +8,15 @@ const k = kaboom({
 });
 
 // load assets
-loadSprite("birdy", "../sprites/birdy.png");
-loadSprite("burdy", "../sprites/bean.png");
-loadSprite("LAZAR", "../sprites/LAZAR.png");
-loadSprite("bg", "../sprites/bg.png");
-loadSprite("pipe", "../sprites/pipe.png");
-loadSprite("box", "../sprites/box.png");
-loadSound("wooosh", "../sounds/wooosh.mp3");
-loadSound("point", "../sounds/point.mp3");
-loadSound("hit", "../sounds/hit.wav");
+loadSprite("birdy", "sprites/birdy.png");
+loadSprite("burdy", "sprites/bean.png");
+loadSprite("LAZAR", "sprites/LAZAR.png");
+loadSprite("bg", "sprites/bg.png");
+loadSprite("pipe", "sprites/pipe.png");
+loadSprite("box", "sprites/box.png");
+loadSound("wooosh", "sounds/wooosh.mp3");
+loadSound("point", "sounds/point.mp3");
+loadSound("hit", "sounds/hit.wav");
 
 let highScore = 0;
 
