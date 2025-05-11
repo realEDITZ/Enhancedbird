@@ -1,10 +1,8 @@
-import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
+import kaboom from "kaboom";
 
-// Initialize kaboom context
-const k = kaboom({
-  scale: 1.3,
-  background: [0, 0, 0],
-  global: true // This makes all kaboom functions globally available
+// initialize context
+kaboom({
+  scale: 1.3
 });
 
 // load assets
@@ -31,36 +29,33 @@ scene("menu", () => {
   add([
     text("ENHANCED Flappy Bird", { size: 45 }),
     pos(width() / 2, height() / 4),
-    anchor("center"),
+    origin("center"),
     color(255, 255, 0),
   ]);
 
-  // Add animated bird for decoration - FIXED VERSION
+  // Add animated bird for decoration
   const menuBird = add([
     sprite("birdy"),
     scale(2),
     pos(width() / 2, height() / 2 - 20),
-    anchor("center"),
-    {
-      // Add floating direction to the object itself
-      floatDir: 1
-    }
+    origin("center"),
   ]);
 
-  // Add the action as a separate function call - FIXED
-  onUpdate(() => {
-    menuBird.pos.y += menuBird.floatDir * 0.7;
+  // Make bird float up and down
+  let floatDir = 1;
+  menuBird.action(() => {
+    menuBird.pos.y += floatDir * 0.7;
     if (menuBird.pos.y > height() / 2 + 10 || menuBird.pos.y < height() / 2 - 30) {
-      menuBird.floatDir *= -1;
+      floatDir *= -1;
     }
   });
-  
+
   // Add Play Button
   const playBtn = add([
     text("PLAY", { size: 32 }),
     pos(width() / 2, height() / 2 + 80),
     area(),
-    anchor("center"),
+    origin("center"),
     color(0, 255, 0),
     "playButton"
   ]);
@@ -70,13 +65,13 @@ scene("menu", () => {
     text("HOW TO PLAY", { size: 32 }),
     pos(width() / 2, height() / 2 + 140),
     area(),
-    anchor("center"),
+    origin("center"),
     color(0, 255, 255),
     "howToPlayButton"
   ]);
 
   // Track mouse clicks
-  onClick(() => {
+  mouseClick(() => {
     // Check if clicking on play button
     if (mousePos().x > playBtn.pos.x - 50 && 
         mousePos().x < playBtn.pos.x + 50 &&
@@ -95,7 +90,7 @@ scene("menu", () => {
   });
 
   // Button hover effect
-  onUpdate("playButton", (btn) => {
+  action("playButton", (btn) => {
     if (mousePos().x > btn.pos.x - 50 && 
         mousePos().x < btn.pos.x + 50 &&
         mousePos().y > btn.pos.y - 20 && 
@@ -106,7 +101,7 @@ scene("menu", () => {
     }
   });
 
-  onUpdate("howToPlayButton", (btn) => {
+  action("howToPlayButton", (btn) => {
     if (mousePos().x > btn.pos.x - 100 && 
         mousePos().x < btn.pos.x + 100 &&
         mousePos().y > btn.pos.y - 20 && 
@@ -118,7 +113,7 @@ scene("menu", () => {
   });
 
   // Keyboard controls for accessibility
-  onKeyPress("space", () => {
+  keyPress("space", () => {
     go("game");
   });
 });
@@ -134,7 +129,7 @@ scene("howToPlay", () => {
   add([
     text("HOW TO PLAY", { size: 40 }),
     pos(width() / 2, 60),
-    anchor("center"),
+    origin("center"),
     color(255, 255, 0),
   ]);
 
@@ -160,7 +155,7 @@ scene("howToPlay", () => {
       width: width() - 100
     }),
     pos(width() / 2, 180),
-    anchor("top"),
+    origin("top"),
     color(255, 255, 255),
   ]);
 
@@ -169,7 +164,7 @@ scene("howToPlay", () => {
     text("BACK", { size: 32 }),
     pos(width() / 4, height() - 80),
     area(),
-    anchor("center"),
+    origin("center"),
     color(255, 100, 100),
   ]);
 
@@ -178,12 +173,12 @@ scene("howToPlay", () => {
     text("PLAY", { size: 32 }),
     pos(width() * 3/4, height() - 80),
     area(),
-    anchor("center"),
+    origin("center"),
     color(0, 255, 0),
   ]);
 
   // Handle mouse clicks
-  onClick(() => {
+  mouseClick(() => {
     // Check if clicking on back button
     if (mousePos().x > backBtn.pos.x - 50 && 
         mousePos().x < backBtn.pos.x + 50 &&
@@ -202,7 +197,7 @@ scene("howToPlay", () => {
   });
 
   // Button hover effects
-  onUpdate(() => {
+  action(() => {
     // Back button hover effect
     if (mousePos().x > backBtn.pos.x - 50 && 
         mousePos().x < backBtn.pos.x + 50 &&
@@ -225,11 +220,11 @@ scene("howToPlay", () => {
   });
 
   // Keyboard controls
-  onKeyPress("escape", () => {
+  keyPress("escape", () => {
     go("menu");
   });
 
-  onKeyPress("space", () => {
+  keyPress("space", () => {
     go("game");
   });
 });
@@ -239,11 +234,11 @@ scene("game", () => {
   let score = 0;
   let gameSpeed = 160; // Initial speed
   let baseSpeed = 160; // Store base speed for power-ups
-  let laserThreshold = randi(20, 35);
+  let laserThreshold = rand(20, 35);
   let lasersActive = false;
   let laserDuration = 25; // Initial duration in seconds
   let breakDuration = 20; // Break duration in seconds
-  let bulletThreshold = randi(35, 55);
+  let bulletThreshold = rand(35, 55);
   let bulletsActive = false;
   let immunityHits = 0;
   let activeEffects = {}; // Track active power-ups
@@ -253,7 +248,7 @@ scene("game", () => {
   let powerUpMessage = add([
     text("", { size: 36 }),
     pos(width() / 2, 80),
-    anchor("center"),
+    origin("center"),
     color(255, 255, 0), // Yellow color for visibility
     z(100) // Ensure it's on top of other elements
   ]);
@@ -318,30 +313,25 @@ scene("game", () => {
       { name: "tripleScore", chance: 0.05, duration: 10 },
     ];
 
-    // FIXED: Create powerUpBox correctly
     const powerUpBox = add([
         sprite("box"),
-        pos(width(), randi(50, height() - 100)),
+        pos(width(), rand(50, height() - 100)),
         area(),
-        move(LEFT, gameSpeed * 2.2),
         "powerup",
-        { 
-          type: choose(powerUps),
-          moveDir: rand(-1, 1) 
-        }
-    ]);
-
-    // Add movement update for the power-up box
-    onUpdate(() => {
-      if (powerUpBox.exists()) {
+        { type: choose(powerUps) },
+        move(LEFT, gameSpeed * 2.2),
+        { moveDir: rand(-1, 1) },
+        {
+          update() {
         powerUpBox.move(0, powerUpBox.moveDir * 2);
         if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
           powerUpBox.moveDir *= -1;
         }
       }
-    });
+      }]);
 
-    wait(randi(40, 65), spawnPowerUp);
+
+    wait(rand(40, 65), spawnPowerUp);
   }
 
   function activatePowerUp(type) {
@@ -542,7 +532,7 @@ scene("game", () => {
     add([
       sprite("pipe", {flipY: true}),
       pos(width(), height()/2 + offset - currentGap/2),
-      anchor("botleft"),
+      origin("botleft"),
       "pipe",
       area()
     ]);
@@ -555,7 +545,7 @@ scene("game", () => {
   // Start spawning power-ups
   wait(5, spawnPowerUp);
 
-  onUpdate("pipe", (pipe) => {
+  action("pipe", (pipe) => {
     pipe.move(-gameSpeed, 0);
 
     if (pipe.passed === false && pipe.pos.x < player.pos.x) {
@@ -583,7 +573,7 @@ scene("game", () => {
 
           // Wait break duration then restart with increased duration
           wait(breakDuration, () => {
-            laserDuration += randi(10, 30); // Increase duration
+            laserDuration += rand(10, 30); // Increase duration
             lasersActive = true;
             spawnLaser();
           });
@@ -620,7 +610,7 @@ scene("game", () => {
     wait(rand(1.5, 4), spawnBullet);
   }
 
-  player.onCollide("bullet", () => {
+  player.collides("bullet", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -630,7 +620,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.onCollide("laser", () => {
+  player.collides("laser", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -640,7 +630,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.onCollide("pipe", () => {
+  player.collides("pipe", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
@@ -650,7 +640,7 @@ scene("game", () => {
     go("gameover", score);
   });
 
-  player.onCollide("powerup", (p) => {
+  player.collides("powerup", (p) => {
     // First destroy the power-up to prevent multiple collisions
     const powerupType = p.type;
     destroy(p);
@@ -663,13 +653,13 @@ scene("game", () => {
     console.log("Collected power-up!");
   });
 
-  onUpdate(() => {
+  player.action(() => {
     if (player.pos.y > height() + 30 || player.pos.y < -30) {
       go("gameover", score);
     }
   });
 
-  onKeyPress("space", () => {
+  keyPress("space", () => {
     play("wooosh");
     player.jump(310);
   });
@@ -698,7 +688,7 @@ scene("gameover", (score) => {
       }
     ),
     pos(width()/2, height()/2),
-    anchor("center"),
+    origin("center"),
     color(255, 255, 255)
   ]);
 
@@ -706,7 +696,7 @@ scene("gameover", (score) => {
   const menuBtn = add([
     text("MENU", { size: 28 }),
     pos(width() / 4, height() - 80),
-    anchor("center"),
+    origin("center"),
     color(255, 100, 100),
   ]);
 
@@ -714,12 +704,12 @@ scene("gameover", (score) => {
   const retryBtn = add([
     text("TRY AGAIN", { size: 28 }),
     pos(width() * 3/4, height() - 80),
-    anchor("center"),
+    origin("center"),
     color(0, 255, 0),
   ]);
 
   // Handle mouse clicks
-  onClick(() => {
+  mouseClick(() => {
     // Check if clicking on menu button
     if (mousePos().x > menuBtn.pos.x - 50 && 
         mousePos().x < menuBtn.pos.x + 50 &&
@@ -738,7 +728,7 @@ scene("gameover", (score) => {
   });
 
   // Button hover effects
-  onUpdate(() => {
+  action(() => {
     // Menu button hover effect
     if (mousePos().x > menuBtn.pos.x - 50 && 
         mousePos().x < menuBtn.pos.x + 50 &&
@@ -760,11 +750,11 @@ scene("gameover", (score) => {
     }
   });
 
-  onKeyPress("space", () => {
+  keyPress("space", () => {
     go("game");
   });
 
-  onKeyPress("escape", () => {
+  keyPress("escape", () => {
     go("menu");
   });
 });
