@@ -1,3 +1,5 @@
+console.log("🔥 main.js loaded");
+
 import kaboom from "kaboom";
 
 // initialize context
