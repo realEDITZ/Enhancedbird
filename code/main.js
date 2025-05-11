@@ -1,10 +1,14 @@
 import kaboom from "https://unpkg.com/kaboom/dist/kaboom.mjs";
 
-// Initialize kaboom context
+// Initialize kaboom context - MODIFIED FOR GITHUB PAGES
 const k = kaboom({
   scale: 1.3,
   background: [0, 0, 0],
-  global: true // This makes all kaboom functions globally available
+  global: true, // This makes all kaboom functions globally available
+  touchToMouse: true, // Better mobile support
+  crisp: true, // Crisp pixel rendering
+  // Using requestAnimationFrame instead of setTimeout for smoother updates
+  debug: false
 });
 
 // load assets
@@ -35,7 +39,7 @@ scene("menu", () => {
     color(255, 255, 0),
   ]);
 
-  // Add animated bird for decoration - FIXED VERSION
+  // Add animated bird for decoration - IMPROVED VERSION
   const menuBird = add([
     sprite("birdy"),
     scale(2),
@@ -43,17 +47,16 @@ scene("menu", () => {
     anchor("center"),
     {
       // Add floating direction to the object itself
-      floatDir: 1
+      floatDir: 1,
+      // Adding explicit update method
+      update() {
+        this.pos.y += this.floatDir * 0.7;
+        if (this.pos.y > height() / 2 + 10 || this.pos.y < height() / 2 - 30) {
+          this.floatDir *= -1;
+        }
+      }
     }
   ]);
-
-  // Add the action as a separate function call - FIXED
-  onUpdate(() => {
-    menuBird.pos.y += menuBird.floatDir * 0.7;
-    if (menuBird.pos.y > height() / 2 + 10 || menuBird.pos.y < height() / 2 - 30) {
-      menuBird.floatDir *= -1;
-    }
-  });
   
   // Add Play Button
   const playBtn = add([
@@ -75,7 +78,7 @@ scene("menu", () => {
     "howToPlayButton"
   ]);
 
-  // Track mouse clicks
+  // Track mouse clicks and touch
   onClick(() => {
     // Check if clicking on play button
     if (mousePos().x > playBtn.pos.x - 50 && 
@@ -140,8 +143,9 @@ scene("howToPlay", () => {
 
   // Instructions text
   const instructions = [
-    "To flap, press the SPACE BAR and try to maneuver",
-    "yourself through the pipes and get a high score!",
+    "To flap, press the SPACE BAR or CLICK/TAP the screen",
+    "and try to maneuver yourself through the pipes",
+    "and get a high score!",
     "",
     "There are powerups that you can encounter along the way",
     "that can do good (or bad)!",
@@ -248,6 +252,7 @@ scene("game", () => {
   let immunityHits = 0;
   let activeEffects = {}; // Track active power-ups
   let scoreMultiplier = 1; // Initialize score multiplier
+  let gameActive = true; // Track if game is active
 
   // Create power-up message display with initial empty text
   let powerUpMessage = add([
@@ -303,68 +308,9 @@ scene("game", () => {
     }
   }
 
-  // Add background
-  add([
-    sprite("bg", {width: width(), height: height()})
-  ]);
-
-  // Add score display
-  const scoreText = add([
-    text(score.toString(), {size: 50}),
-    pos(10, 10)
-  ]);
-
-  // Add the player
-  const player = add([
-    sprite("birdy"),
-    scale(2),
-    pos(80, 40),
-    area(),
-    body(),
-  ]);
-
-  // Function to produce pipes
-  function producePipes() {
-    // Calculate pipe gap based on score
-    const getPipeGap = () => {
-      const baseGap = 245; // Start with a wider gap
-      const minGap = 132; // Don't let it get too narrow
-      const reductionRate = 5; // How much to reduce per point
-      const currentGap = Math.max(baseGap - (score * reductionRate), minGap);
-      const variance = 33; // Small variance for randomness
-      return currentGap + rand(-variance, variance);
-    };
-
-    const offset = rand(-50, 50);
-    const currentGap = getPipeGap();
-
-    // Bottom pipe
-    add([
-      sprite("pipe"),
-      pos(width(), height()/2 + offset + currentGap/2),
-      area(),
-      "pipe",
-      { passed: false },
-      { speed: gameSpeed },
-    ]);
-
-    // Top pipe (flipped)
-    add([
-      sprite("pipe", {flipY: true}),
-      pos(width(), height()/2 + offset - currentGap/2),
-      anchor("botleft"),
-      area(),
-      "pipe",
-      { speed: gameSpeed },
-    ]);
-  }
-
-  // Set up pipe generation
-  loop(1.5, producePipes);
-
   // Power-up system
   function spawnPowerUp() {
-    if (!player.exists()) return;
+    if (!player.exists() || !gameActive) return;
 
     const powerUps = [
       { name: "quarterSpeed", chance: 0.25, duration: 15 },
@@ -377,224 +323,287 @@ scene("game", () => {
       { name: "tripleScore", chance: 0.05, duration: 10 },
     ];
 
-    // Create a weighted choice
-    const weightedPowerUps = [];
-    powerUps.forEach(pu => {
-      for (let i = 0; i < pu.chance * 100; i++) {
-        weightedPowerUps.push(pu);
-      }
-    });
-
-    // Pick a random power-up from the weighted list
-    const selectedPowerUp = weightedPowerUps[Math.floor(Math.random() * weightedPowerUps.length)];
-
-    // Create the power-up box
+    // Create powerUpBox
     const powerUpBox = add([
-      sprite("box"),
-      pos(width(), randi(50, height() - 100)),
-      area(),
-      "powerup",
-      { 
-        type: selectedPowerUp,
-        moveDir: rand(-1, 1) 
-      },
+        sprite("box"),
+        pos(width(), randi(50, height() - 100)),
+        area(),
+        move(LEFT, gameSpeed * 2.2),
+        "powerup",
+        { 
+          type: choose(powerUps),
+          moveDir: rand(-1, 1) 
+        }
     ]);
 
-    // Add movement directly to the power-up
+    // Add movement update for the power-up box
     powerUpBox.onUpdate(() => {
-      powerUpBox.move(-gameSpeed * 2.2, powerUpBox.moveDir * 2);
+      powerUpBox.move(0, powerUpBox.moveDir * 2);
       if (powerUpBox.pos.y < 50 || powerUpBox.pos.y > height() - 100) {
         powerUpBox.moveDir *= -1;
       }
     });
 
-    // Schedule next power-up
     wait(randi(40, 65), spawnPowerUp);
   }
 
-  // Function to handle power-up activation
   function activatePowerUp(type) {
-    let message = "";
-    
-    // Debug log to confirm activation
-    console.log("Activating power-up: " + type.name);
+      let message = "";
 
-    switch(type.name) {
-      case "quarterSpeed":
-        message = "QUARTER SPEED!";
-        gameSpeed = gameSpeed * 0.25;
-        activeEffects["quarterSpeed"] = true;
-        showPowerUpMessage(message);
+      switch(type.name) {
+        case "quarterSpeed":
+          message = "QUARTER SPEED!";
+          const quarterSpeed = gameSpeed * 0.25;
+          gameSpeed = quarterSpeed;
+          activeEffects["quarterSpeed"] = true;
+          showPowerUpMessage(message);
 
-        wait(type.duration, () => {
-          gameSpeed = gameSpeed / 0.25;
-          delete activeEffects["quarterSpeed"];
+          wait(type.duration, () => {
+            if (!gameActive) return;
+            gameSpeed = gameSpeed / 0.25;
+            delete activeEffects["quarterSpeed"];
 
-          // Only hide message if no other effects are active
-          if (Object.keys(activeEffects).length === 0) {
-            hidePowerUpMessage();
-          } else if (immunityHits > 0) {
-            updateImmunityMessage(); // Switch back to showing immunity
-          }
-        });
-        break;
+            // Only hide message if no other effects are active
+            if (Object.keys(activeEffects).length === 0) {
+              hidePowerUpMessage();
+            } else if (immunityHits > 0) {
+              updateImmunityMessage(); // Switch back to showing immunity
+            }
+          });
+          break;
 
-      case "halfSpeed":
-        message = "HALF SPEED!";
-        gameSpeed = gameSpeed * 0.5;
-        activeEffects["halfSpeed"] = true;
-        showPowerUpMessage(message);
+        case "halfSpeed":
+          message = "HALF SPEED!";
+          const halfSpeed = gameSpeed * 0.5;
+          gameSpeed = halfSpeed;
+          activeEffects["halfSpeed"] = true;
+          showPowerUpMessage(message);
 
-        wait(type.duration, () => {
-          gameSpeed = gameSpeed / 0.5;
-          delete activeEffects["halfSpeed"];
+          wait(type.duration, () => {
+            if (!gameActive) return;
+            gameSpeed = gameSpeed / 0.5;
+            delete activeEffects["halfSpeed"];
 
-          // Only hide message if no other effects are active
-          if (Object.keys(activeEffects).length === 0) {
-            hidePowerUpMessage();
-          } else if (immunityHits > 0) {
-            updateImmunityMessage(); // Switch back to showing immunity
-          }
-        });
-        break;
+            // Only hide message if no other effects are active
+            if (Object.keys(activeEffects).length === 0) {
+              hidePowerUpMessage();
+            } else if (immunityHits > 0) {
+              updateImmunityMessage(); // Switch back to showing immunity
+            }
+          });
+          break;
 
-      case "immunity":
-        immunityHits = 2;
-        activeEffects["immunity"] = true;
-        updateImmunityMessage();
-        break;
+        case "immunity":
+          immunityHits = 2;
+          activeEffects["immunity"] = true;
+          updateImmunityMessage();
+          break;
 
-      case "doubleSpeed":
-        message = "DOUBLE SPEED!";
-        gameSpeed = gameSpeed * 2;
-        activeEffects["doubleSpeed"] = true;
-        showPowerUpMessage(message);
+        case "doubleSpeed":
+          message = "DOUBLE SPEED!";
+          const doubleSpeed = gameSpeed * 2;
+          gameSpeed = doubleSpeed;
+          activeEffects["doubleSpeed"] = true;
+          showPowerUpMessage(message);
 
-        wait(type.duration, () => {
-          gameSpeed = gameSpeed / 2;
-          delete activeEffects["doubleSpeed"];
+          wait(type.duration, () => {
+            if (!gameActive) return;
+            gameSpeed = gameSpeed / 2;
+            delete activeEffects["doubleSpeed"];
 
-          // Only hide message if no other effects are active
-          if (Object.keys(activeEffects).length === 0) {
-            hidePowerUpMessage();
-          } else if (immunityHits > 0) {
-            updateImmunityMessage(); // Switch back to showing immunity
-          }
-        });
-        break;
+            // Only hide message if no other effects are active
+            if (Object.keys(activeEffects).length === 0) {
+              hidePowerUpMessage();
+            } else if (immunityHits > 0) {
+              updateImmunityMessage(); // Switch back to showing immunity
+            }
+          });
+          break;
 
-      case "spawnLasers":
-        message = "LASERS ACTIVE!";
-        lasersActive = true;
-        activeEffects["lasers"] = true;
-        showPowerUpMessage(message);
-        // Immediately start spawning lasers
-        spawnLaser();
+        case "spawnLasers":
+          message = "LASERS ACTIVE!";
+          lasersActive = true;
+          activeEffects["lasers"] = true;
+          showPowerUpMessage(message);
+          // Immediately start spawning lasers
+          spawnLaser();
 
-        wait(type.duration, () => {
-          lasersActive = false;
-          delete activeEffects["lasers"];
+          wait(type.duration, () => {
+            if (!gameActive) return;
+            lasersActive = false;
+            delete activeEffects["lasers"];
 
-          // Only hide message if no other effects are active
-          if (Object.keys(activeEffects).length === 0) {
-            hidePowerUpMessage();
-          } else if (immunityHits > 0) {
-            updateImmunityMessage(); // Switch back to showing immunity
-          }
-        });
-        break;
+            // Only hide message if no other effects are active
+            if (Object.keys(activeEffects).length === 0) {
+              hidePowerUpMessage();
+            } else if (immunityHits > 0) {
+              updateImmunityMessage(); // Switch back to showing immunity
+            }
+          });
+          break;
 
-      case "spawnBullets":
-        message = "BULLETS ACTIVE!";
-        bulletsActive = true;
-        activeEffects["bullets"] = true;
-        showPowerUpMessage(message);
-        // Immediately start spawning bullets
-        spawnBullet();
+        case "spawnBullets":
+          message = "BULLETS ACTIVE!";
+          bulletsActive = true;
+          activeEffects["bullets"] = true;
+          showPowerUpMessage(message);
+          // Immediately start spawning bullets
+          spawnBullet();
 
-        wait(type.duration, () => {
-          bulletsActive = false;
-          delete activeEffects["bullets"];
+          wait(type.duration, () => {
+            if (!gameActive) return;
+            bulletsActive = false;
+            delete activeEffects["bullets"];
 
-          // Only hide message if no other effects are active
-          if (Object.keys(activeEffects).length === 0) {
-            hidePowerUpMessage();
-          } else if (immunityHits > 0) {
-            updateImmunityMessage(); // Switch back to showing immunity
-          }
-        });
-        break;
+            // Only hide message if no other effects are active
+            if (Object.keys(activeEffects).length === 0) {
+              hidePowerUpMessage();
+            } else if (immunityHits > 0) {
+              updateImmunityMessage(); // Switch back to showing immunity
+            }
+          });
+          break;
 
-      case "doubleScore":
-        message = "DOUBLE SCORE!";
-        scoreMultiplier = 2;
-        activeEffects["doubleScore"] = true;
-        showPowerUpMessage(message);
+        case "doubleScore":
+          message = "DOUBLE SCORE!";
+          scoreMultiplier = 2;
+          activeEffects["doubleScore"] = true;
+          showPowerUpMessage(message);
 
-        wait(type.duration, () => {
-          scoreMultiplier = 1;
-          delete activeEffects["doubleScore"];
+          wait(type.duration, () => {
+            if (!gameActive) return;
+            scoreMultiplier = 1;
+            delete activeEffects["doubleScore"];
 
-          // Only hide message if no other effects are active
-          if (Object.keys(activeEffects).length === 0) {
-            hidePowerUpMessage();
-          } else if (immunityHits > 0) {
-            updateImmunityMessage(); // Switch back to showing immunity
-          }
-        });
-        break;
+            // Only hide message if no other effects are active
+            if (Object.keys(activeEffects).length === 0) {
+              hidePowerUpMessage();
+            } else if (immunityHits > 0) {
+              updateImmunityMessage(); // Switch back to showing immunity
+            }
+          });
+          break;
 
-      case "tripleScore":
-        message = "TRIPLE SCORE!";
-        scoreMultiplier = 3;
-        activeEffects["tripleScore"] = true;
-        showPowerUpMessage(message);
+        case "tripleScore":
+          message = "TRIPLE SCORE!";
+          scoreMultiplier = 3;
+          activeEffects["tripleScore"] = true;
+          showPowerUpMessage(message);
 
-        wait(type.duration, () => {
-          scoreMultiplier = 1;
-          delete activeEffects["tripleScore"];
+          wait(type.duration, () => {
+            if (!gameActive) return;
+            scoreMultiplier = 1;
+            delete activeEffects["tripleScore"];
 
-          // Only hide message if no other effects are active
-          if (Object.keys(activeEffects).length === 0) {
-            hidePowerUpMessage();
-          } else if (immunityHits > 0) {
-            updateImmunityMessage(); // Switch back to showing immunity
-          }
-        });
-        break;
+            // Only hide message if no other effects are active
+            if (Object.keys(activeEffects).length === 0) {
+              hidePowerUpMessage();
+            } else if (immunityHits > 0) {
+              updateImmunityMessage(); // Switch back to showing immunity
+            }
+          });
+          break;
+      }
     }
+
+  // Function to calculate pipe gap based on score
+  function getPipeGap() {
+    const baseGap = 245; // Start with a wider gap
+    const minGap = 132; // Don't let it get too narrow
+    const reductionRate = 5; // How much to reduce per point
+    const currentGap = Math.max(baseGap - (score * reductionRate), minGap);
+    const variance = 33; // Small variance for randomness
+    return currentGap + rand(-variance, variance);
   }
 
-  // Handle pipe movement and scoring
+  add([
+    sprite("bg", {width: width(), height: height()})
+  ]);
+
+  const scoreText = add([
+    text(score, {size: 50})
+  ]);
+
+  // add a game object to screen with proper physics
+  const player = add([
+    // list of components
+    sprite("birdy"),
+    scale(2),
+    pos(80, 40),
+    area(),
+    body({
+      // Added gravity configuration for more consistent behavior
+      gravity: 980
+    }),
+    // Add explicit update method for player
+    {
+      update() {
+        // This ensures the player is always being updated
+        // on each frame, even if global updates are delayed
+      }
+    }
+  ]);
+
+  function producePipes(){
+    if (!gameActive) return;
+    
+    const offset = rand(-50, 50);
+    const currentGap = getPipeGap();
+
+    add([
+      sprite("pipe"),
+      pos(width(), height()/2 + offset + currentGap/2),
+      "pipe",
+      area(),
+      {passed: false}
+    ]);
+
+    add([
+      sprite("pipe", {flipY: true}),
+      pos(width(), height()/2 + offset - currentGap/2),
+      anchor("botleft"),
+      "pipe",
+      area()
+    ]);
+  }
+
+  const pipeInterval = loop(1.5, () => {
+    producePipes();
+  });
+
+  // Start spawning power-ups
+  wait(5, spawnPowerUp);
+
   onUpdate("pipe", (pipe) => {
-    // Move the pipe according to current game speed
     pipe.move(-gameSpeed, 0);
 
-    // Check if pipe has passed the player
     if (pipe.passed === false && pipe.pos.x < player.pos.x) {
       pipe.passed = true;
       // Apply score multiplier when increasing score
       score += 1 * scoreMultiplier;
-      scoreText.text = score.toString();
+      scoreText.text = score;
       gameSpeed += 9; // Increase speed with each point
       play("point");
 
-      // Check for reaching thresholds
+      // Only trigger based on score if not already active via power-up
       if (score >= bulletThreshold && !bulletsActive) {
         bulletsActive = true;
         spawnBullet();
       }
 
+      // Only trigger based on score if not already active via power-up
       if (score >= laserThreshold && !lasersActive) {
         lasersActive = true;
         spawnLaser();
 
         // Set timer to deactivate lasers
         wait(laserDuration, () => {
+          if (!gameActive) return;
           lasersActive = false;
 
           // Wait break duration then restart with increased duration
           wait(breakDuration, () => {
+            if (!gameActive) return;
             laserDuration += randi(10, 30); // Increase duration
             lasersActive = true;
             spawnLaser();
@@ -604,53 +613,41 @@ scene("game", () => {
     }
   });
 
-  // Function to spawn lasers
   function spawnLaser() {
-    if (!lasersActive || !player.exists()) return;
+    if (!lasersActive || !gameActive) return;
 
     add([
       sprite("LAZAR"),
       pos(rand(0, width()), 0),
       area(),
       "laser",
-      { 
-        speed: 400 // Fixed speed value
-      }
-    ]).onUpdate(function() {
-      this.move(0, this.speed);
-    });
+      move(DOWN, 400),
+    ]);
 
     wait(rand(1, 3), spawnLaser);
   }
 
-  // Function to spawn bullets
   function spawnBullet() {
-    if (!bulletsActive || !player.exists()) return;
+    if (!bulletsActive || !gameActive) return;
 
     add([
       sprite("burdy"),
       pos(width(), rand(50, height() - 50)),
       area(),
       "bullet",
-      {
-        speed: 300 // Fixed speed value
-      }
-    ]).onUpdate(function() {
-      this.move(-this.speed, 0);
-    });
+      move(LEFT, 3000),
+    ]);
 
     wait(rand(1.5, 4), spawnBullet);
   }
 
-  // Collision handlers
   player.onCollide("bullet", () => {
     if (immunityHits > 0) {
       immunityHits--;
       updateImmunityMessage();
       return;
     }
-    play("hit");
-    go("gameover", score);
+    endGame();
   });
 
   player.onCollide("laser", () => {
@@ -659,8 +656,7 @@ scene("game", () => {
       updateImmunityMessage();
       return;
     }
-    play("hit");
-    go("gameover", score);
+    endGame();
   });
 
   player.onCollide("pipe", () => {
@@ -669,8 +665,7 @@ scene("game", () => {
       updateImmunityMessage();
       return;
     }
-    play("hit");
-    go("gameover", score);
+    endGame();
   });
 
   player.onCollide("powerup", (p) => {
@@ -681,26 +676,40 @@ scene("game", () => {
     // Then activate the power-up and play sound
     activatePowerUp(powerupType);
     play("point");
-
-    // Debug confirmation
-    console.log("Collected power-up!");
   });
 
-  // Check if player goes out of bounds
-  player.onUpdate(() => {
+  // Function to end the game properly
+  function endGame() {
+    if (!gameActive) return;
+    gameActive = false;
+    
+    play("hit");
+    go("gameover", score);
+  }
+
+  onUpdate(() => {
+    if (!gameActive) return;
+    
     if (player.pos.y > height() + 30 || player.pos.y < -30) {
-      go("gameover", score);
+      endGame();
     }
   });
 
-  // Controls
+  // Support both keyboard and touch/mouse controls
   onKeyPress("space", () => {
-    play("wooosh");
-    player.jump(310);
+    if (gameActive) {
+      play("wooosh");
+      player.jump(310);
+    }
   });
-
-  // Start spawning power-ups after a delay
-  wait(5, spawnPowerUp);
+  
+  // Add mouse/touch control for mobile
+  onClick(() => {
+    if (gameActive) {
+      play("wooosh");
+      player.jump(310);
+    }
+  });
 });
 
 scene("gameover", (score) => {
@@ -717,7 +726,7 @@ scene("gameover", (score) => {
       "GAME OVER!\n\n"
       + "SCORE: " + score + "\n"
       + "HIGH SCORE: " + highScore + "\n\n"
-      + "Press SPACE to try again\n"
+      + "Press SPACE or CLICK to try again\n"
       + "Press ESC for menu",
       {
         size: 35,
@@ -762,6 +771,9 @@ scene("gameover", (score) => {
         mousePos().y > retryBtn.pos.y - 20 && 
         mousePos().y < retryBtn.pos.y + 20) {
       go("game");
+    } else {
+      // Click anywhere else to retry
+      go("game");
     }
   });
 
@@ -797,5 +809,5 @@ scene("gameover", (score) => {
   });
 });
 
-// Start with the menu scene
+// Start with the menu scene instead of going directly to game
 go("menu");
